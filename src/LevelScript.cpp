@@ -1204,9 +1204,9 @@ void ExportLevel(N64Rom &Rom, u8 LvlID) {
     if (!FoundScriptEntry) {
         const u8 Pattern[] = {0x1b, 0x04, 0x00, 0x00, 0x03, 0x04, 0x00, 0x02, 0x34, 0x04, 0x00, 0x00};
         size_t PatternLen = sizeof(Pattern);
-        u8* Start = Rom.Data;
-        u8* End = Rom.Data + Rom.Size;
-        u8* Found = std::search(Start, End, Pattern, Pattern + PatternLen);
+        u8 *Start = Rom.Data;
+        u8 *End = Rom.Data + Rom.Size;
+        u8 *Found = std::search(Start, End, Pattern, Pattern + PatternLen);
         if (Found != End) {
             Entry = (u32)(Found - Start);
             if (!FoundScriptEntry) printf("Script Entry found at address: 0x%x\n", Entry);
@@ -1223,7 +1223,7 @@ void ExportLevel(N64Rom &Rom, u8 LvlID) {
     }
 
     bool ForceDontPrint = false;
-    bool BinaryHack = GameType.IsOldBinary() || GameType.IsOldBinary();
+    bool BinaryHack = GameType.IsBinary();
 
     auto ShouldPrintCmd = [&](u8 Cmd) {
         if (!Script.FoundLevel) {

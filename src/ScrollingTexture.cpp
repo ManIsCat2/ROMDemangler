@@ -34,7 +34,7 @@ bool UsesNewEditorScroll(N64Rom &Rom) {
     return Val != 0x27bdffe8;
 }
 
-ScrollTexture ConvertRMTexScrolls(LevelScript& Script, u32 Bparam, u16 NumVtx, u16 Dir, s16 Speed) {
+ScrollTexture ConvertRMTexScrolls(LevelScript &Script, u32 Bparam, u16 NumVtx, u16 Dir, s16 Speed) {
     ScrollTexture S;
     S.Addr = Bparam;
     S.NumVtx = NumVtx;
@@ -49,7 +49,7 @@ ScrollTexture ConvertRMTexScrolls(LevelScript& Script, u32 Bparam, u16 NumVtx, u
 }
 
 // this is the second most depressing function i have ever wrote
-ScrollTexture ConvertEditorTexScrolls(LevelScript& Script, u32 Bparam, s16 PosX, s16 PosY, s16 PosZ, std::string &BhvName, N64Rom& Rom) {
+ScrollTexture ConvertEditorTexScrolls(LevelScript &Script, u32 Bparam, s16 PosX, s16 PosY, s16 PosZ, std::string &BhvName, N64Rom& Rom) {
     ScrollTexture S;
     
     u32 Addr = 0x0E000000 + ((GetPosByte(PosX) - 2) << 16) + (Bparam >> 16);

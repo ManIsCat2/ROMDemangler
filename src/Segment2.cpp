@@ -34,7 +34,7 @@ const std::string CourseNames[] = {
     "COURSE_CAKE_END"
 };
 
-std::string SM64ToString(u8 num) {
+static std::string SM64ToString(u8 num) {
     if (num < 10) {
         return std::string(1, (char)(num + 0x30));
     } else if (num < 0x24) {
@@ -106,7 +106,7 @@ void FindAndLoadSegment2(N64Rom &Rom) {
 
     u32 WCount = Rom.Size / 4;
     for (u32 I = 0; I < WCount; ++I) {
-        u32 Word = Rom.ReadBytes<u32>(I * 4, false);
+        u32 Word = Rom.ReadBytesPhysical<u32>(I * 4);
         if ((Word >> 26) != 15) continue;
 
         u32 LuiUpper = Word & 0xFFFF;

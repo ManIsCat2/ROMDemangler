@@ -264,9 +264,9 @@ int main(int argc, char** argv) {
         };
 
         size_t PatternLen = sizeof(Pattern);
-        u8* Start = Rom.Data;
-        u8* End = Rom.Data + Rom.Size;
-        u8* Found = std::search(Start, End, Pattern, Pattern + PatternLen);
+        u8 *Start = Rom.Data;
+        u8 *End = Rom.Data + Rom.Size;
+        u8 *Found = std::search(Start, End, Pattern, Pattern + PatternLen);
         if (Found != End) {
             GameTypeStr += "HackerSM64";
             GameType.SetID(GT_HACKER);
