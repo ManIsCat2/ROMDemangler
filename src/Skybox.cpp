@@ -12,13 +12,7 @@ struct SkyboxTile {
 static std::vector<SkyboxTile> GetSkyboxTiles(u32 SegAddr) {
     const u32 Bank = SegAddr >> 24;
     const auto &SegData = SegmentData[Bank];
-    
-    s32 NumTiles = 8 * ((SegData.size() - 0x140) / 16384);
-
-    // small skyboxes have an extra tile after the main image used to pad the ptrlist
-    if (NumTiles < 64) {
-        NumTiles++;
-    }
+    const s32 NumTiles = (SegData.size() - 0x140) / 2048;
 
     printf("Num skybox tiles: %i\n", NumTiles);
 
@@ -65,12 +59,13 @@ static void ExportPtrList(FILE* File, const std::vector<SkyboxTile> &Tiles, cons
     int TotalTiles = Rows * 8 + Rows * 2;
 
     for (int y = 0; y < Rows; y++) {
+        fprintf(File, "\t%s,\n", Tiles[y * 8 + 7].Name.c_str());
+
         for (int x = 0; x < 8; x++) {
             fprintf(File, "\t%s,\n", Tiles[y * 8 + x].Name.c_str());
         }
 
         fprintf(File, "\t%s,\n", Tiles[y * 8 + 0].Name.c_str());
-        fprintf(File, "\t%s,\n", Tiles[y * 8 + 1].Name.c_str());
     }
 
     for (int i = TotalTiles; i < 80; i++) {
@@ -92,6 +87,11 @@ bool ExportSkybox(LevelScript &Script, std::string &SkyboxName) {
     printf("Exporting skybox %s\n", SkyboxName.c_str());
 
     std::vector<SkyboxTile> Tiles = GetSkyboxTiles(SegAddr);
+
+    if (Tiles.empty()) {
+        return false;
+    }
+
     ExportSkyboxTiles(Tiles);
 
     std::string LevelPath = "output/levels/" + Script.Name + "/";
