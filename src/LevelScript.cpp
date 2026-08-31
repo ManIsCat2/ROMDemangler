@@ -1017,8 +1017,8 @@ std::string LvlCmdSetTerrain(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     u32 Collision = Rom.ReadBytes<u32>(Start + 4, false);
 
     std::string AreaColName = std::format(
-        "{}_area_{}_collision",
-        Script.Name, Script.CurrArea
+        "{}_area_{}_collision_{:#x}",
+        Script.Name, Script.CurrArea, Collision
     );
     std::string OutArgs = std::format(
         "/* Col */ {}",

@@ -6,16 +6,18 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-const u8 G_VTX_F3DEX2          = 0x01;
-const u8 G_TRI1_F3DEX2         = 0x05;
-const u8 G_TRI2_F3DEX2         = 0x06;
-const u8 G_TEXTURE_F3DEX2      = 0xD7;
-const u8 G_GEOMETRYMODE_F3DEX2 = 0xD9;
-const u8 G_MOVEMEM_F3DEX2      = 0xDC;
-const u8 G_DL_F3DEX2           = 0xDE;
-const u8 G_ENDDL_F3DEX2        = 0xDF;
+const u8 G_VTX_F3DEX2            = 0x01;
+const u8 G_TRI1_F3DEX2           = 0x05;
+const u8 G_TRI2_F3DEX2           = 0x06;
+const u8 G_TEXTURE_F3DEX2        = 0xD7;
+const u8 G_GEOMETRYMODE_F3DEX2   = 0xD9;
+const u8 G_MOVEMEM_F3DEX2        = 0xDC;
+const u8 G_DL_F3DEX2             = 0xDE;
+const u8 G_ENDDL_F3DEX2          = 0xDF;
+const u8 G_SETOTHERMODE_H_F3DEX2 = 0xE3;
+const u8 G_SETOTHERMODE_L_F3DEX2 = 0xE2;
 
-const u8 G_TRI2_F3DEX          = (u8)(G_IMMFIRST - 14);
+const u8 G_TRI2_F3DEX            = (u8)(G_IMMFIRST - 14);
 
 const char *F3D_CC(enum F3DCCPart Part, u16 Element) {
     if (Part == CC_PART_A) {
@@ -251,6 +253,10 @@ void ParseRDPCommands(std::vector<F3DTexture> &Textures, u32 W0, u32 W1, u8 Cmd,
             break;
         case G_SETPRIMCOLOR:
             fprintf(ModelDump, "    gsDPSetPrimColor(0, 0, %u, %u, %u, %u),\n", 
+                    C1(24, 8), C1(16, 8), C1(8, 8), C1(0, 8));
+            break;
+        case G_SETFOGCOLOR:
+            fprintf(ModelDump, "    gsDPSetFogColor(%u, %u, %u, %u),\n", 
                     C1(24, 8), C1(16, 8), C1(8, 8), C1(0, 8));
             break;
         case G_SETCOMBINE: {
@@ -571,6 +577,10 @@ void ExportModels(N64Rom &Rom, LevelScript &Script, const std::string &LvlName, 
                     case (u8)G_TEXTURE:
                         fprintf(ModelDump,"    gsSPTexture(%u, %u, %u, %u, %u),\n", C1(16,16), C1(0,16), C0(11,3), C0(8,3), C0(0,8));
                         break;
+                    case (u8)G_SETOTHERMODE_L:
+                    case (u8)G_SETOTHERMODE_H:
+                        fprintf(ModelDump,"    gsSPSetOtherMode(%u, %u, %u, %u),\n", Cmd, C0(8, 8), C0(0, 8), W1);
+                        break;
                 }
             } else if (Rom.Microcode == UCODE_F3DEX2) {
                 if (Cmd == G_ENDDL_F3DEX2) { fprintf(ModelDump, "    gsSPEndDisplayList(),\n};\n\n"); break; }
@@ -604,6 +614,10 @@ void ExportModels(N64Rom &Rom, LevelScript &Script, const std::string &LvlName, 
                         break;
                     case G_MOVEMEM_F3DEX2:
                         fprintf(ModelDump,"    gsSPLight(&%s_light_0x%x.col, %u),\n", PlaceHolderName, W1, (((C0(8, 8) * 8) / 24 - 2) == 1 ? 2 : 1));
+                        break;
+                    case (u8)G_SETOTHERMODE_L_F3DEX2:
+                    case (u8)G_SETOTHERMODE_H_F3DEX2:
+                        fprintf(ModelDump,"    gsSPSetOtherMode(%u, %u, %u, %u),\n", Cmd, 31 - C0(8, 8) - C0(0, 8), C0(0, 8) + 1, W1);
                         break;
                 }
             } else if (Rom.Microcode == UCODE_F3DEX) {
@@ -641,6 +655,10 @@ void ExportModels(N64Rom &Rom, LevelScript &Script, const std::string &LvlName, 
                     }
                     case (u8)G_TEXTURE:
                         fprintf(ModelDump,"    gsSPTexture(%u, %u, %u, %u, %u),\n", C1(16,16), C1(0,16), C0(11,3), C0(8,3), C0(0,8));
+                        break;
+                    case (u8)G_SETOTHERMODE_L:
+                    case (u8)G_SETOTHERMODE_H:
+                        fprintf(ModelDump,"    gsSPSetOtherMode(%u, %u, %u, %u),\n", Cmd, C0(8, 8), C0(0, 8), W1);
                         break;
                 }
             }

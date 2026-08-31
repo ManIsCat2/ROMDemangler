@@ -34,7 +34,7 @@ f32 CalculateTriangleArea(const FloatVertex3D &V1, const FloatVertex3D &V2, cons
 void ExportCollision(N64Rom &Rom, u8 Area, const std::string &LvlName, u32 SegAddr, LevelScript &Script, const char *FilePath) {
 Retry:
     FILE *ColDump = fopen(FilePath, "w");
-    fprintf(ColDump, "const Collision %s_area_%u_collision[] = {\n", LvlName.c_str(), Area);
+    fprintf(ColDump, "const Collision %s_area_%u_collision_0x%x[] = {\n", LvlName.c_str(), Area, SegAddr);
     fprintf(ColDump, "    COL_INIT(),\n");
 
     u32 Entry = SegAddr;
