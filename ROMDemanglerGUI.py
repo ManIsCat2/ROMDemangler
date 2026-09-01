@@ -161,7 +161,7 @@ class DemanglerGUI(QWidget):
         export_layout = QGridLayout(export_group)
 
         self.checks = {}
-        opts = ["actors", "sounds", "tweaks", "fix collision", "ignore segment 0", "textures", "text", "skyboxes"]
+        opts = ["actors", "sounds", "tweaks", "fix collision", "ignore segment 0", "textures", "text", "skyboxes", "behaviors"]
         for i, opt in enumerate(opts):
             cb = QCheckBox(opt.title())
             self.checks[opt] = cb
@@ -255,6 +255,8 @@ class DemanglerGUI(QWidget):
             args.append("--textures")
         if self.checks.get("text") and self.checks["text"].isChecked():
             args.append("--text")
+        if self.checks.get("behaviors") and self.checks["behaviors"].isChecked():
+            args.append("--behaviors")
 
         program = self.find_executable()
         if not program:

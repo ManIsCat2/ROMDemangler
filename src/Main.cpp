@@ -4,6 +4,7 @@
 #include "Decompress.h"
 #include "Memory.h"
 #include "Segment2.h"
+#include "BehaviorScript.h"
 #include "cxxopts.hpp"
 
 bool VerbosePrinting = false;
@@ -13,6 +14,7 @@ bool TweakExport = false;
 bool CollisionFix = false;
 bool SkyboxExport = false;
 bool TexturesExport = false;
+bool BehaviorsExport = false;
 bool TextExport = false;
 SM64GameType GameType;
 u32 FoundScriptEntry = 0;
@@ -166,6 +168,7 @@ int main(int argc, char** argv) {
         ("skyboxes", "Export Skyboxes", cxxopts::value<bool>())
         ("textures", "Export Segment2 textures", cxxopts::value<bool>())
         ("text", "Export dialogs and course names", cxxopts::value<bool>())
+        ("behaviors", "Export behavior scripts", cxxopts::value<bool>())
         ("h,help", "Print usage");
 
     auto Result = Options.parse(argc, argv);
@@ -176,6 +179,7 @@ int main(int argc, char** argv) {
     CollisionFix = Result["fix-collision"].as<bool>();
     SkyboxExport = Result["skyboxes"].as<bool>();
     TexturesExport = Result["textures"].as<bool>();
+    BehaviorsExport = Result["behaviors"].as<bool>();
     TextExport = Result["text"].as<bool>();
     std::string RAMPath;
     std::string CustomSymbolsPath;

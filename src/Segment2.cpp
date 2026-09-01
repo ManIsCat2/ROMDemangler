@@ -35,7 +35,7 @@ const std::string CourseNames[] = {
 };
 
 static std::string SM64ToString(u8 num) {
-    if (num < 10) {
+    if (num < 0x0A) {
         return std::string(1, (char)(num + 0x30));
     } else if (num < 0x24) {
         return std::string(1, (char)(num + 0x37));
@@ -92,14 +92,23 @@ void FindAndLoadSegment2(N64Rom &Rom) {
     u32 Seg2End = 0;
     std::vector<std::pair<u32, u32>> Matches;
     std::vector<Segment2Match> CodeMatches;
-    
-    std::unordered_map<u32, u32> Mio0Map;
+    std::unordered_map<u32, u32> CompMap;
+
     for (u32 i = 0; i < Rom.Size - 16; i += 4) {
-        if (Rom.ReadBytesPhysical<u32>(i) == 0x4D494F30) {
-            u32 UncompSize = Rom.ReadBytesPhysical<u32>(i + 4);
+        u32 Magic = Rom.ReadBytesPhysical<u32>(i);
+        if (Magic == 0x4D494F30 || Magic == 0x59617930 || Magic == 0x524E4301 || Magic == 0x524E4302) {
+            u32 UncompSize = 0;
+            if (Magic == 0x524E4301 || Magic == 0x524E4302) {
+                for (int j = 0; j < 4; j++) {
+                    UncompSize = (UncompSize << 8) | Rom.ReadBytesPhysical<u8>(i + 4 + j);
+                }
+            } else {
+                UncompSize = Rom.ReadBytesPhysical<u32>(i + 4);
+            }
+
             if (UncompSize >= 32768 && UncompSize <= 131072) {
                 Matches.push_back({i, UncompSize});
-                Mio0Map[i] = UncompSize;
+                CompMap[i] = UncompSize;
             }
         }
     }
@@ -128,7 +137,7 @@ void FindAndLoadSegment2(N64Rom &Rom) {
                 u32 OriginalUpper = (Lower >= 0x8000) ? (LuiUpper - 1) & 0xFFFF : LuiUpper;
                 u32 TestAddr = (OriginalUpper << 16) | Lower;
 
-                if (Mio0Map.count(TestAddr)) {
+                if (CompMap.count(TestAddr)) {
                     HasLower = true;
                     ReconstructedAddr = TestAddr;
                 }
@@ -141,7 +150,7 @@ void FindAndLoadSegment2(N64Rom &Rom) {
 
         if (HasLower && HasSegLoad) {
             u32 CodeAddr = I * 4;
-            CodeMatches.push_back({ReconstructedAddr, CodeAddr, Mio0Map[ReconstructedAddr]});
+            CodeMatches.push_back({ReconstructedAddr, CodeAddr, CompMap[ReconstructedAddr]});
         }
     }
 

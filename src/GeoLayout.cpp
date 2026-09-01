@@ -1056,7 +1056,7 @@ std::string GetSpecialGeoCmdName(N64Rom &Rom, u8 Cmd, u32 Start) {
     }
 }
 
-void WriteGeoLayoutRecursive(FILE *GeoDump, N64Rom &Rom, u8 Area, std::string LvlName, u32 SegAddr, u32 Entry, LevelScript &Script) {
+static void WriteGeoLayoutRecursive(FILE *GeoDump, N64Rom &Rom, u8 Area, std::string LvlName, u32 SegAddr, u32 Entry, LevelScript &Script) {
     if (!SegAddr || ProcessedGeos[SegAddr]) return;
     ProcessedGeos[SegAddr] = true;
     u32 ScanEntry = Entry;

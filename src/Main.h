@@ -15,4 +15,5 @@ extern bool IgnoreSegment0;
 extern bool CollisionFix;
 extern bool SkyboxExport;
 extern bool TextExport;
+extern bool BehaviorsExport;
 extern std::string ActorsExport;

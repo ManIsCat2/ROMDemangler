@@ -9,6 +9,7 @@
 #include "Segment2.h"
 #include "Sound.h"
 #include "MacroObject.h"
+#include "BehaviorScript.h"
 #include "Memory.h"
 
 namespace ActorGroup {
@@ -912,6 +913,8 @@ std::string LvlCmdPlaceObject(N64Rom &Rom, LevelScript &Script, u32 &Start) {
         }
     }
 
+    Script.Behaviors.push_back(Bhv);
+
     std::string OutArgs = std::format(
         "/* Model */ {:#x}, /* Pos */ {}, {}, {}, /* Angle */ {}, {}, {}, /* Param */ {:#x}, /* Behavior */ {}, /* Act */ {}",
         ModelID, PosX, PosY, PosZ, AngleX, AngleY, AngleZ, BhvParam, BhvName, Acts
@@ -1291,4 +1294,5 @@ void ExportLevel(N64Rom &Rom, u8 LvlID) {
     ResolveScrollTargets(Script);
     
     if (ActorsExport != "none") ExportActors(Rom, Script);
+    if (BehaviorsExport) ExportBehaviorScripts(Rom, Script);
 }

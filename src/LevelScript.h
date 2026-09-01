@@ -50,6 +50,7 @@ public:
     u8 LevelID = 0;
     struct AreaData AreaDatas[MAX_AREA] = {};
     std::vector<Actor> Actors;
+    std::vector<u32> Behaviors = {};
     std::vector<u8> Areas = {};
     std::vector<ScrollTexture> ScrollTargets = {};
     u8 CurrArea = 0;
