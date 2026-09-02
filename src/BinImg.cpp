@@ -1,18 +1,20 @@
 #include <cstring>
 #include "BinImg.h"
 
+#define SCALE_5_8(VAL) (((VAL) << 3) | ((VAL) >> 2))
+
 namespace BinImg {
     void DecodeRGBA16(const u8 *Src, u8 *Dst, u32 Pixels) {
         for (u32 I = 0; I < Pixels; I++) {
-            u16 C = (Src[I * 2] << 8) | Src[I * 2 + 1];
-            u8 R = ((C >> 11) & 0x1F) << 3;
-            u8 G = ((C >> 6) & 0x1F) << 3;
-            u8 B = ((C >> 1) & 0x1F) << 3;
-            u8 A = (C & 1) ? 255 : 0;
-            Dst[I * 4 + 0] = R;
-            Dst[I * 4 + 1] = G;
-            Dst[I * 4 + 2] = B;
-            Dst[I * 4 + 3] = A;
+            u16 C = ((u16)Src[I * 2] << 8) | (u16)Src[I * 2 + 1];
+            u8 R = (C >> 11) & 0x1F;
+            u8 G = (C >> 6)  & 0x1F;
+            u8 B = (C >> 1)  & 0x1F;
+
+            Dst[I * 4 + 0] = SCALE_5_8(R);
+            Dst[I * 4 + 1] = SCALE_5_8(G);
+            Dst[I * 4 + 2] = SCALE_5_8(B);
+            Dst[I * 4 + 3] = (C & 1) ? 255 : 0;
         }
     }
 
