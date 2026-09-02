@@ -12,7 +12,7 @@ void ExportMovTex(N64Rom &Rom, u8 Area, const std::string &LvlName, LevelScript 
         return;
     }
     for (u32 DT = 0; DT < Script.AreaDatas[Area].WaterBoxParams.size(); DT++) {
-        s16 WaterType = Script.AreaDatas[Area].WaterBoxParams.data()[DT] & 0xff;
+        s16 WaterType = Script.AreaDatas[Area].WaterBoxParams[DT] & 0xff;
         u32 WaterBox = 0;
         std::vector<u32> MovTexPtrs = {};
         std::vector<std::string> MovTexQCStrings = {};
@@ -31,7 +31,7 @@ void ExportMovTex(N64Rom &Rom, u8 Area, const std::string &LvlName, LevelScript 
 
         u32 MovTexID = 0;
         for (u32 MT = 0; MT < MovTexPtrs.size(); MT++) {
-            u32 Entry = MovTexPtrs.data()[MT];
+            u32 Entry = MovTexPtrs[MT];
             char MovTexStr[1024];
             snprintf(MovTexStr, 1024, "%s_%u_movtex_%u_%u", LvlName.c_str(), Area, DT, MovTexID);
             fprintf(MovTexDump, "static Movtex %s[] = {", MovTexStr);
@@ -47,7 +47,7 @@ void ExportMovTex(N64Rom &Rom, u8 Area, const std::string &LvlName, LevelScript 
         }
         fprintf(MovTexDump, "const struct MovtexQuadCollection %s_%u_movtex_%u[] = {\n", LvlName.c_str(), Area, DT);
         for (u32 MSTR = 0; MSTR < MovTexQCStrings.size(); MSTR++) {
-            fprintf(MovTexDump, "    {%u, %s},\n", MSTR, MovTexQCStrings.data()[MSTR].c_str());
+            fprintf(MovTexDump, "    {%u, %s},\n", MSTR, MovTexQCStrings[MSTR].c_str());
         }
         fprintf(MovTexDump, "    {-1, NULL},\n");
         fprintf(MovTexDump, "};\n");

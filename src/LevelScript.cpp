@@ -10,6 +10,7 @@
 #include "Sound.h"
 #include "MacroObject.h"
 #include "BehaviorScript.h"
+#include "Room.h"
 #include "Memory.h"
 
 namespace ActorGroup {
@@ -965,6 +966,26 @@ std::string LvlCmdWarpNode(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     return OutArgs;
 };
 
+std::string LvlCmdPaintingWarpNode(N64Rom &Rom, LevelScript &Script, u32 &Start) {
+    /*
+    #define PAINTING_WARP_NODE(id, destLevel, destArea, destNode, flags) \
+    CMD_BBBB(0x27, 0x08, id, destLevel), \
+    CMD_BBBB(destArea, destNode, flags, 0x00)
+    */
+
+    u8 Id = Rom.ReadBytes<u8>(Start + 2, false);
+    u8 DestLevel = Rom.ReadBytes<u8>(Start + 3, false);
+    u8 DestArea = Rom.ReadBytes<u8>(Start + 4, false);
+    u8 DestNode = Rom.ReadBytes<u8>(Start + 5, false);
+    u8 Flags = Rom.ReadBytes<u8>(Start + 6, false);
+
+    std::string OutArgs = std::format(
+        "{:#x}, {:#x}, {:#x}, {:#x}, {:#x}",
+        Id, DestLevel, DestArea, DestNode, Flags
+    );
+
+    return OutArgs;
+};
 
 std::string LvlCmdPlaceInstaWarp(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /*
@@ -1030,6 +1051,28 @@ std::string LvlCmdSetTerrain(N64Rom &Rom, LevelScript &Script, u32 &Start) {
 
     Script.AreaDatas[Script.CurrArea].Collision = Collision;
 
+    return OutArgs;
+};
+
+std::string LvlCmdSetRooms(N64Rom &Rom, LevelScript &Script, u32 &Start) {
+    /*
+    #define ROOMS(surfaceRooms) \
+    CMD_BBH(0x2F, 0x08, 0x0000), \
+    CMD_PTR(surfaceRooms)
+    */
+
+    u32 SurfaceRooms = Rom.ReadBytes<u32>(Start + 4, false);
+
+    std::string AreaColName = std::format(
+        "{}_{}_rooms_{:#x}",
+        Script.Name, Script.CurrArea, SurfaceRooms
+    );
+    std::string OutArgs = std::format(
+        "/* Rooms */ {}",
+        AreaColName
+    );
+
+    Script.AreaDatas[Script.CurrArea].Rooms = SurfaceRooms;
     return OutArgs;
 };
 
@@ -1139,9 +1182,9 @@ std::string (*LvlCommandsFunctions[])(N64Rom &Rom, LevelScript &Script, u32 &Sta
     LvlCmdLoadMio0,         (LvlCmdStub),           LvlCmdLoadMio0Tex,      LvlCmdInitLevel,
     LvlCmdClearLevel,       LvlCmdAllocLevelPool,   LvlCmdFreeLevelPool,    LvlCmdStartArea,
     LvlCmdEndArea,          LvlCmdLoadModelFromDL,  LvlCmdLoadModelFromGeo, (LvlCmdStub),
-    LvlCmdPlaceObject,      LvlCmdPlaceMario,       LvlCmdWarpNode,         (LvlCmdStub),
+    LvlCmdPlaceObject,      LvlCmdPlaceMario,       LvlCmdWarpNode,         LvlCmdPaintingWarpNode,
     LvlCmdPlaceInstaWarp,   (LvlCmdStub),           (LvlCmdStub),           LvlCmdSetMarioPos,
-    (LvlCmdStub),           (LvlCmdStub),           LvlCmdSetTerrain,       (LvlCmdStub),
+    (LvlCmdStub),           (LvlCmdStub),           LvlCmdSetTerrain,       LvlCmdSetRooms,
     LvlCmdShowDialog,       LvlCmdSetTerrainType,   (LvlCmdStub),           (LvlCmdStub),
     (LvlCmdStub),           (LvlCmdStub),           LvlCmdSetMusic,         (LvlCmdStub),
     LvlCmdStopMusic,        LvlCmdMacroObjects,     (LvlCmdStub),           (LvlCmdStub),
@@ -1159,6 +1202,7 @@ void ExportAreas(N64Rom &Rom, LevelScript &Script, const std::string &LvlName) {
         u32 GeoSegAddr = Script.AreaDatas[I].GeoLayout;
         u32 ColSegAddr = Script.AreaDatas[I].Collision;
         u32 MacroSegAddr = Script.AreaDatas[I].MacroObjects;
+        u32 RoomSegAddr = Script.AreaDatas[I].Rooms;
 
         Script.SetAreaSegmented0x0E(Rom, I);
 
@@ -1176,6 +1220,8 @@ void ExportAreas(N64Rom &Rom, LevelScript &Script, const std::string &LvlName) {
         ExportModels(Rom, Script, LvlName, I, ModelDumpPath.c_str());
         std::string MacroDumpPath = AreaStrNum + "/macro.inc.c";
         ExportMacroObjects(Rom, I, LvlName, MacroSegAddr, MacroDumpPath.c_str());
+        std::string RoomDumpPath = AreaStrNum + "/room.inc.c";
+        ExportRoom(Rom, I, LvlName, RoomSegAddr, Script, RoomDumpPath.c_str());
 
         printf("%s Area %u done\n", LvlName.c_str(), I);
     }

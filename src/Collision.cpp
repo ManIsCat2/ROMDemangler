@@ -6,12 +6,104 @@
 
 #include "Collision.h"
 
+#define SPTYPE_NO_YROT_OR_PARAMS  0
+#define SPTYPE_YROT_NO_PARAMS     1
+#define SPTYPE_PARAMS_AND_YROT    2
+#define SPTYPE_UNKNOWN            3
+#define SPTYPE_DEF_PARAM_AND_YROT 4
+
 struct Vertex3D {
     s16 X, Y, Z;
 };
 
 struct FloatVertex3D {
     f32 X, Y, Z;
+};
+ 
+std::map<u8, u8> SpecialObjectTypes = {
+    {0x00, SPTYPE_YROT_NO_PARAMS    },
+    {0x01, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x02, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x03, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x04, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x05, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x06, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x07, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x08, SPTYPE_YROT_NO_PARAMS    },
+    {0x09, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x0A, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x0B, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x0C, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x0D, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x0E, SPTYPE_YROT_NO_PARAMS    },
+    {0x0F, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x10, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x11, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x12, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x13, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x14, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x15, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x16, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x17, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x18, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x19, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x1A, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x1B, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x1C, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x1D, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x1E, SPTYPE_UNKNOWN           },
+    {0x1F, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x20, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x21, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x22, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x23, SPTYPE_YROT_NO_PARAMS    },
+    {0x24, SPTYPE_YROT_NO_PARAMS    },
+    {0x25, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x26, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x27, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x28, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x65, SPTYPE_YROT_NO_PARAMS    },
+    {0x66, SPTYPE_YROT_NO_PARAMS    },
+    {0x67, SPTYPE_YROT_NO_PARAMS    },
+    {0x68, SPTYPE_YROT_NO_PARAMS    },
+    {0x69, SPTYPE_YROT_NO_PARAMS    },
+    {0x6A, SPTYPE_YROT_NO_PARAMS    },
+    {0x6B, SPTYPE_YROT_NO_PARAMS    },
+    {0x6C, SPTYPE_YROT_NO_PARAMS    },
+    {0x6D, SPTYPE_YROT_NO_PARAMS    },
+    {0x6E, SPTYPE_YROT_NO_PARAMS    },
+    {0x6F, SPTYPE_YROT_NO_PARAMS    },
+    {0x70, SPTYPE_YROT_NO_PARAMS    },
+    {0x71, SPTYPE_YROT_NO_PARAMS    },
+    {0x72, SPTYPE_YROT_NO_PARAMS    },
+    {0x73, SPTYPE_YROT_NO_PARAMS    },
+    {0x74, SPTYPE_YROT_NO_PARAMS    },
+    {0x75, SPTYPE_YROT_NO_PARAMS    },
+    {0x76, SPTYPE_YROT_NO_PARAMS    },
+    {0x77, SPTYPE_YROT_NO_PARAMS    },
+    {0x78, SPTYPE_YROT_NO_PARAMS    },
+    {0x79, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x7A, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x7B, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x7C, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x7D, SPTYPE_NO_YROT_OR_PARAMS },
+    {0x89, SPTYPE_YROT_NO_PARAMS    },
+    {0x7E, SPTYPE_YROT_NO_PARAMS    },
+    {0x7F, SPTYPE_YROT_NO_PARAMS    },
+    {0x80, SPTYPE_YROT_NO_PARAMS    },
+    {0x81, SPTYPE_YROT_NO_PARAMS    },
+    {0x82, SPTYPE_YROT_NO_PARAMS    },
+    {0x8A, SPTYPE_DEF_PARAM_AND_YROT},
+    {0x8B, SPTYPE_DEF_PARAM_AND_YROT},
+    {0x8C, SPTYPE_DEF_PARAM_AND_YROT},
+    {0x8D, SPTYPE_DEF_PARAM_AND_YROT},
+    {0x88, SPTYPE_PARAMS_AND_YROT   },
+    {0x83, SPTYPE_PARAMS_AND_YROT   },
+    {0x84, SPTYPE_PARAMS_AND_YROT   },
+    {0x85, SPTYPE_PARAMS_AND_YROT   },
+    {0x86, SPTYPE_PARAMS_AND_YROT   },
+    {0x87, SPTYPE_PARAMS_AND_YROT   },
+    {0xFF, SPTYPE_NO_YROT_OR_PARAMS }
 };
 
 static bool ColsHaveExtraForce = false;
@@ -240,6 +332,7 @@ Retry:
         s16 Type = Pair.first;
         const auto &TrisList = Pair.second;
         fprintf(ColDump, "    COL_TRI_INIT(%d, %d),\n", Type, (int)TrisList.size());
+        Script.AreaDatas[Area].TriangleCount += TrisList.size();
         for (const auto &Tri : TrisList) {
             if (SpecialTris.count(Type)) {
                 fprintf(ColDump, "    COL_TRI_SPECIAL(%d, %d, %d, %d),\n", Tri[0], Tri[1], Tri[2], Tri[3]);
@@ -261,6 +354,46 @@ Retry:
             }
             fprintf(ColDump, "    COL_END(),\n");
             break;
+        } else if (SpecialType == 0x43) {
+            fprintf(ColDump, "    COL_SPECIAL_INIT(%d),\n", Stuff);
+            XOffset += 4;
+            for (s32 W = 0; W < Stuff; W++) {
+                s16 Preset = Rom.ReadBytes<s16>(Entry + XOffset + 0);
+                s16 PosX = Rom.ReadBytes<s16>(Entry + XOffset + 2);
+                s16 PosY = Rom.ReadBytes<s16>(Entry + XOffset + 4);
+                s16 PosZ = Rom.ReadBytes<s16>(Entry + XOffset + 6);
+
+                switch (SpecialObjectTypes[Preset]) {
+                    case SPTYPE_NO_YROT_OR_PARAMS: {
+                        fprintf(ColDump, "    SPECIAL_OBJECT(%d, %d, %d, %d),\n", Preset, PosX, PosY, PosZ);
+                        break;
+                    }
+                    case SPTYPE_YROT_NO_PARAMS: {
+                        s16 Yaw = Rom.ReadBytes<s16>(Entry + XOffset + 8);
+                        fprintf(ColDump, "    SPECIAL_OBJECT_WITH_YAW(%d, %d, %d, %d, %d),\n", Preset, PosX, PosY, PosZ, Yaw);
+                        XOffset += 2;
+                        break;
+                    }
+                    case SPTYPE_PARAMS_AND_YROT: {
+                        s16 Yaw = Rom.ReadBytes<s16>(Entry + XOffset + 8);
+                        s16 Param = Rom.ReadBytes<s16>(Entry + XOffset + 10);
+                        fprintf(ColDump, "    SPECIAL_OBJECT_WITH_YAW_AND_PARAM(%d, %d, %d, %d, %d, %d),\n", Preset, PosX, PosY, PosZ, Yaw, Param);
+                        XOffset += 4;
+                        break;
+                    }
+                    case SPTYPE_DEF_PARAM_AND_YROT: {
+                        s16 Yaw = Rom.ReadBytes<s16>(Entry + XOffset + 8);
+                        fprintf(ColDump, "    SPECIAL_OBJECT_WITH_YAW(%d, %d, %d, %d, %d),\n", Preset, PosX, PosY, PosZ, Yaw);
+                        XOffset += 2;
+                        break;
+                    }
+                    default: {
+                        fprintf(ColDump, "    SPECIAL_OBJECT(%d, %d, %d, %d),\n", Preset, PosX, PosY, PosZ);
+                        break;
+                    }
+                }
+                XOffset += 8;
+            }
         } else if (SpecialType == 0x44) {
             fprintf(ColDump, "    COL_WATER_BOX_INIT(%d),\n", Stuff);
             Script.AreaDatas[Area].WaterBoxCount = Stuff;

@@ -35,8 +35,10 @@ struct ScrollTexture {
 struct AreaData {
     u32 GeoLayout = 0;
     u32 Collision = 0;
+    u32 Rooms = 0;
     u32 MacroObjects = 0;
     u8 WaterBoxCount = 0;
+    u16 TriangleCount = 0;
     std::vector<s16> WaterBoxParams = {};
     std::vector<u32> DisplayLists = {};
     std::set<u32> Vertices = {};
