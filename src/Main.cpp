@@ -217,6 +217,17 @@ int main(int argc, char** argv) {
         if (PatternInRom == P || PatternInRom2 == P) {
             GameType.SetID(GT_EDITOR);
             GameTypeStr += "SM64 Editor";
+
+            u16 Version = Rom.ReadBytesPhysical<u16>(52);
+            u16 Major = Version / 1000;
+            u16 Minor = (Version / 100) % 10;
+            u16 Patch = (Version / 10) % 10;
+            if (!Major && !Minor && !Patch) {
+                GameTypeStr += " (old version)";
+                GameType.SetID(GT_LEVEL_IMPORTER);
+            } else {
+                GameTypeStr += " v" + std::to_string(Major) + "." + std::to_string(Minor) + "." + std::to_string(Patch);
+            }
             break;
         }
     }

@@ -13,6 +13,7 @@ enum SM64GameTypeID {
     GT_UNKNOWN,
     GT_ROM_MANAGER,
     GT_EDITOR,
+    GT_LEVEL_IMPORTER,
     GT_BBP,
     GT_DECOMP,
     GT_HACKER
@@ -25,7 +26,7 @@ struct SM64GameType {
         ID = NewID;
     }
     bool IsOldBinary(void) {
-        return (ID == GT_ROM_MANAGER || ID == GT_EDITOR);
+        return (ID == GT_ROM_MANAGER || ID == GT_EDITOR || ID == GT_LEVEL_IMPORTER);
     }
     bool IsNewBinary(void) {
         return (ID == GT_BBP);

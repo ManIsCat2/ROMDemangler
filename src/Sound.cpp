@@ -141,6 +141,9 @@ void ExportSequences(N64Rom &Rom) {
 
 void GetSequenceNames(N64Rom &Rom) {
     u32 Entry = 0x7F1000;
+    if (GameType.GetID() == GT_EDITOR) {
+        Entry = 0x0081D000;
+    }
     for (int I = 0; I < SeqFileHeader->SeqCount; I++) {
         u8 NameLen = Rom.ReadBytesPhysical<u8>(Entry);
         
