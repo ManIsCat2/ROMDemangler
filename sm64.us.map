@@ -6026,7 +6026,7 @@ Linker script and memory map
                 0x13000b8c                bhvThwomp
                 0x13000bc8                bhvThwomp2
                 0x13000c04                bhvTumblingBridgePlatform
-                0x13000c28                bhvTumblingBridge
+                0x13000c28                bhvWfTumblingBridge
                 0x13000c44                bhvBbhTumblingBridge
                 0x13000c64                bhvLllTumblingBridge
                 0x13000c84                bhvFlame
@@ -6051,7 +6051,7 @@ Linker script and memory map
                 0x13000f48                bhvUkikiCage
                 0x13000f9c                bhvBitfsSinkingPlatforms
                 0x13000fc8                bhvBitfsSinkingCagePlatform
-                0x13001000                bhvDDDMovingPole
+                0x13001000                bhvDddMovingPole
                 0x13001030                bhvBitfsTiltingInvertedPyramid
                 0x13001064                bhvSquishablePlatform
                 0x13001098                bhvCutOutObject
@@ -6125,7 +6125,7 @@ Linker script and memory map
                 0x13001bd4                bhvBowserKeyCourseExit
                 0x13001bf4                bhvInvisibleObjectsUnderBridge
                 0x13001c04                bhvWaterLevelPillar
-                0x13001c34                bhvDDDWarp
+                0x13001c34                bhvDddWarp
                 0x13001c58                bhvMoatGrills
                 0x13001c7c                bhvClockMinuteHand
                 0x13001c8c                bhvClockHourHand
@@ -6328,7 +6328,7 @@ Linker script and memory map
                 0x13003a30                bhvFreeBowlingBall
                 0x13003a58                bhvBowlingBall
                 0x13003a80                bhvTtmBowlingBallSpawner
-                0x13003aa4                bhvBoBBowlingBallSpawner
+                0x13003aa4                bhvBobBowlingBallSpawner
                 0x13003ac8                bhvThiBowlingBallSpawner
                 0x13003ae0                bhvRrCruiserWing
                 0x13003b00                bhvSpindel

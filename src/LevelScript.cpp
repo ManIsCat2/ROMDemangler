@@ -325,6 +325,40 @@ std::map<u8, std::string> LevelNames = {
     {36, "ttm"}
 };
 
+std::map<u8, std::string> LevelSpecGeoNameStart = {
+    {4, "geo_bbh"},
+    {5, "ccm_geo"},
+    {6, "castle_geo"},
+    {7, "hmc_geo"},
+    {8, "ssl_geo"},
+    {9, "bob_geo"},
+    {10, "sl_geo"},
+    {11, "wdw_geo"},
+    {12, "jrb_geo"},
+    {13, "thi_geo"},
+    {14, "ttc_geo"},
+    {15, "rr_geo"},
+    {16, "castle_grounds_geo"},
+    {17, "geo_bitdw"},
+    {18, "vcutm_geo"},
+    {19, "bitfs_geo"},
+    {20, "sa_geo"},
+    {21, "bits_geo"},
+    {22, "lll_geo"},
+    {23, "ddd_geo"},
+    {24, "wf_geo"},
+    {25, "ending_geo"},
+    {26, "castle_courtyard_geo"},
+    {27, "pss_geo"},
+    {28, "cotmc_geo"},
+    {29, "totwc_geo"},
+    {30, "bowser_1_geo"},
+    {31, "wmotr_geo"},
+    {33, "bowser_2_geo"},
+    {34, "bowser_3_geo"},
+    {36, "ttm_geo"}
+};
+
 std::string GetLevelName(u16 ID) {
     if (!LevelNames.contains(ID)) {
         return std::format("ext_level_{}", ID);
@@ -832,12 +866,20 @@ std::string LvlCmdLoadModelFromGeo(N64Rom &Rom, LevelScript &Script, u32 &Start)
             if (BuiltinName != "") {
                 GeoName = BuiltinName;
             }
-        } else {
-            if (GeoBank != 0x0F && GeoBank != 0x00 && GeoBank != 0x03 && GeoBank != 0x12) {
-                const std::string BuiltinName = ActorGroup::GetGeoName(Geo);
-                if (BuiltinName != "") {
-                    GeoName = BuiltinName;
-                }
+        } else if (GeoBank == 0x0E || GeoBank == 0x12) {
+            std::string GeoName0x12 = GetLabelFromMap(0x12000000 | (Geo & 0x00FFFFFF));
+            std::string GeoName0x0E = GetLabelFromMap(0x0E000000 | (Geo & 0x00FFFFFF));
+            std::string SelectedName = GeoName0x12;
+            if (!GeoName0x0E.starts_with("Custom_")) {
+                SelectedName = GeoName0x0E;
+            }
+            if (!SelectedName.starts_with("Custom_")) {
+                GeoName = LevelSpecGeoNameStart[Script.LevelID] + std::format("_{:06X}", (Script.LevelID == 5 ? (Geo - 0x10) : Geo) & 0x00FFFFFF);
+            }
+        } else if (GeoBank != 0x0F && GeoBank != 0x00 && GeoBank != 0x03) {
+            const std::string BuiltinName = ActorGroup::GetGeoName(Geo);
+            if (BuiltinName != "") {
+                GeoName = BuiltinName;
             }
         }
     }
@@ -1168,6 +1210,29 @@ std::string LvlCmdMacroObjects(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     return OutArgs;
 };
 
+std::string LvlCmdWhirlpool(N64Rom &Rom, LevelScript &Script, u32 &Start) {
+    /*
+    #define WHIRLPOOL(index, condition, posX, posY, posZ, strength) \
+    CMD_BBBB(0x3B, 0x0C, index, condition), \
+    CMD_HH(posX, posY), \
+    CMD_HH(posZ, strength)
+    */
+
+    u8 Index = Rom.ReadBytes<u8>(Start + 2, false);
+    u8 Cond = Rom.ReadBytes<u8>(Start + 3, false);
+    s16 PosX = Rom.ReadBytes<s16>(Start + 4, false);
+    s16 PosY = Rom.ReadBytes<s16>(Start + 6, false);
+    s16 PosZ = Rom.ReadBytes<s16>(Start + 8, false);
+    s16 Strength = Rom.ReadBytes<s16>(Start + 10, false);
+
+    std::string OutArgs = std::format(
+        "{}, {}, {}, {}, {}, {}",
+        Index, Cond, PosX, PosY, PosZ, Strength
+    );
+
+    return OutArgs;
+};
+
 std::string LvlCmdStub(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     return "";
 };
@@ -1187,7 +1252,7 @@ std::string (*LvlCommandsFunctions[])(N64Rom &Rom, LevelScript &Script, u32 &Sta
     (LvlCmdStub),           (LvlCmdStub),           LvlCmdSetTerrain,       LvlCmdSetRooms,
     LvlCmdShowDialog,       LvlCmdSetTerrainType,   (LvlCmdStub),           (LvlCmdStub),
     (LvlCmdStub),           (LvlCmdStub),           LvlCmdSetMusic,         (LvlCmdStub),
-    LvlCmdStopMusic,        LvlCmdMacroObjects,     (LvlCmdStub),           (LvlCmdStub),
+    LvlCmdStopMusic,        LvlCmdMacroObjects,     (LvlCmdStub),           LvlCmdWhirlpool,
     (LvlCmdStub),
 };
 
