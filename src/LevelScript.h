@@ -52,9 +52,10 @@ public:
     u8 LevelID = 0;
     struct AreaData AreaDatas[MAX_AREA] = {};
     std::vector<Actor> Actors;
-    std::vector<u32> Behaviors = {};
+    std::vector<std::pair<u32, std::string>> Objects = {};
     std::vector<u8> Areas = {};
     std::vector<ScrollTexture> ScrollTargets = {};
+    std::map<u16, std::string> ModelIds;
     u8 CurrArea = 0;
     bool FoundLevel = false;
     std::string Name = "";
@@ -67,4 +68,5 @@ public:
     void AddDisplayList(u32 Address, u8 Area);
 };
 
-void ExportLevel(N64Rom &Rom, u8 LvlID);
+extern std::string GetGeoNameForLoad(LevelScript &Script, u32 Geo, std::string Base);
+extern void ExportLevel(N64Rom &Rom, u8 LvlID);

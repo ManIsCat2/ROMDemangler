@@ -1,9 +1,10 @@
 #include "BehaviorScript.h"
 #include "LevelScript.h"
 #include "Memory.h"
-#include <string>
+#include "Collision.h"
 
 std::map<u32, bool> ProcessedBhvs = {};
+std::string CurrentBhvActor = "";
 
 std::string BhvCommandsName[] = {
     "BEGIN", "DELAY", "CALL", "RETURN", "GOTO", "BEGIN_REPEAT",
@@ -21,7 +22,7 @@ std::string BhvCommandsName[] = {
     "SET_INT_UNUSED", "SPAWN_WATER_DROPLET"
 };
 
-std::string BhvCmdBegin(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdBegin(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Defines the start of the behavior script as well as the object list the object belongs to.
     // Has some special behavior for certain objects.
     #define BEGIN(objList) \
@@ -30,7 +31,7 @@ std::string BhvCmdBegin(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}", ObjList);
 }
 
-std::string BhvCmdDelay(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdDelay(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Delays the behavior script for a certain number of frames.
     #define DELAY(num) \
         BC_B0H(0x01, num) */
@@ -38,7 +39,7 @@ std::string BhvCmdDelay(N64Rom &Rom, u32 &Start) {
     return std::format("{}", Num);
 }
 
-std::string BhvCmdCall(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdCall(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Jumps to a new behavior command and stores the return address in the object's stack.
     #define CALL(addr) \
         BC_B(0x02), \
@@ -48,14 +49,14 @@ std::string BhvCmdCall(N64Rom &Rom, u32 &Start) {
     return std::format("{}", BhvName);
 }
 
-std::string BhvCmdReturn(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdReturn(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Jumps back to the behavior command stored in the object's stack.
     #define RETURN() \
         BC_B(0x03) */
     return "";
 }
 
-std::string BhvCmdGoto(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdGoto(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Jumps to a new behavior script without saving anything.
     #define GOTO(addr) \
         BC_B(0x04), \
@@ -65,7 +66,7 @@ std::string BhvCmdGoto(N64Rom &Rom, u32 &Start) {
     return std::format("{}", BhvName);
 }
 
-std::string BhvCmdBeginRepeat(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdBeginRepeat(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Marks the start of a loop that will repeat a certain number of times.
     #define BEGIN_REPEAT(count) \
         BC_B0H(0x05, count) */
@@ -73,35 +74,35 @@ std::string BhvCmdBeginRepeat(N64Rom &Rom, u32 &Start) {
     return std::format("{}", Count);
 }
 
-std::string BhvCmdEndRepeat(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdEndRepeat(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Marks the end of a repeating loop.
     #define END_REPEAT() \
         BC_B(0x06) */
     return "";
 }
 
-std::string BhvCmdEndRepeatContinue(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdEndRepeatContinue(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Also marks the end of a repeating loop, but continues executing commands following the loop on the same frame.
     #define END_REPEAT_CONTINUE() \
         BC_B(0x07) */
     return "";
 }
 
-std::string BhvCmdBeginLoop(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdBeginLoop(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Marks the beginning of an infinite loop.
     #define BEGIN_LOOP() \
         BC_B(0x08) */
     return "";
 }
 
-std::string BhvCmdEndLoop(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdEndLoop(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Marks the end of an infinite loop.
     #define END_LOOP() \
         BC_B(0x09) */
     return "";
 }
 
-std::string BhvCmdBreak(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdBreak(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Exits the behavior script.
     // Often used to end behavior scripts that do not contain an infinite loop.
     #define BREAK() \
@@ -109,14 +110,14 @@ std::string BhvCmdBreak(N64Rom &Rom, u32 &Start) {
     return "";
 }
 
-std::string BhvCmdBreakUnused(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdBreakUnused(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Exits the behavior script, unused.
     #define BREAK_UNUSED() \
         BC_B(0x0B) */
     return "";
 }
 
-std::string BhvCmdCallNative(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdCallNative(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Executes a native game function.
     #define CALL_NATIVE(func) \
         BC_B(0x0C), \
@@ -126,7 +127,7 @@ std::string BhvCmdCallNative(N64Rom &Rom, u32 &Start) {
     return std::format("{}", FuncName);
 }
 
-std::string BhvCmdAddFloat(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdAddFloat(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Adds a float to the specified field.
     #define ADD_FLOAT(field, value) \
         BC_BBH(0x0D, field, value) */
@@ -135,7 +136,7 @@ std::string BhvCmdAddFloat(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}", Field, Value);
 }
 
-std::string BhvCmdSetFloat(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetFloat(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the specified field to a float.
     #define SET_FLOAT(field, value) \
         BC_BBH(0x0E, field, value) */
@@ -144,7 +145,7 @@ std::string BhvCmdSetFloat(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}", Field, Value);
 }
 
-std::string BhvCmdAddInt(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdAddInt(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Adds an integer to the specified field.
     #define ADD_INT(field, value) \
         BC_BBH(0x0F, field, value) */
@@ -153,7 +154,7 @@ std::string BhvCmdAddInt(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}", Field, Value);
 }
 
-std::string BhvCmdSetInt(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetInt(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the specified field to an integer.
     #define SET_INT(field, value) \
         BC_BBH(0x10, field, value) */
@@ -162,7 +163,7 @@ std::string BhvCmdSetInt(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}", Field, Value);
 }
 
-std::string BhvCmdOrInt(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdOrInt(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Performs a bitwise OR with the specified field and the given integer.
     // Usually used to set an object's flags.
     #define OR_INT(field, value) \
@@ -172,7 +173,7 @@ std::string BhvCmdOrInt(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}", Field, Value);
 }
 
-std::string BhvCmdBitClear(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdBitClear(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Performs a bit clear with the specified short. Unused in favor of the 32-bit version.
     #define BIT_CLEAR(field, value) \
         BC_BBH(0x12, field, value) */
@@ -181,7 +182,7 @@ std::string BhvCmdBitClear(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}", Field, Value);
 }
 
-std::string BhvCmdSetIntRandRshift(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetIntRandRshift(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Gets a random short, right shifts it the specified amount and adds min to it, then sets the specified field to that value.
     #define SET_INT_RAND_RSHIFT(field, min, rshift) \
         BC_BBH(0x13, field, min), \
@@ -192,7 +193,7 @@ std::string BhvCmdSetIntRandRshift(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}, {}", Field, Min, Rshift);
 }
 
-std::string BhvCmdSetRandomFloat(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetRandomFloat(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the specified field to a random float in the given range.
     #define SET_RANDOM_FLOAT(field, min, range) \
         BC_BBH(0x14, field, min), \
@@ -203,7 +204,7 @@ std::string BhvCmdSetRandomFloat(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}, {}", Field, Min, Range);
 }
 
-std::string BhvCmdSetRandomInt(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetRandomInt(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the specified field to a random integer in the given range.
     #define SET_RANDOM_INT(field, min, range) \
         BC_BBH(0x15, field, min), \
@@ -214,7 +215,7 @@ std::string BhvCmdSetRandomInt(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}, {}", Field, Min, Range);
 }
 
-std::string BhvCmdAddRandomFloat(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdAddRandomFloat(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Adds a random float in the given range to the specified field.
     #define ADD_RANDOM_FLOAT(field, min, range) \
         BC_BBH(0x16, field, min), \
@@ -225,7 +226,7 @@ std::string BhvCmdAddRandomFloat(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}, {}", Field, Min, Range);
 }
 
-std::string BhvCmdAddIntRandRshift(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdAddIntRandRshift(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Gets a random short, right shifts it the specified amount and adds min to it, then adds the value to the specified field. Unused.
     #define ADD_INT_RAND_RSHIFT(field, min, rshift) \
         BC_BBH(0x17, field, min), \
@@ -236,7 +237,7 @@ std::string BhvCmdAddIntRandRshift(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}, {}", Field, Min, Rshift);
 }
 
-std::string BhvCmdNop1(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdNop1(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* No operation. Unused.
     #define CMD_NOP_1(field) \
         BC_BB(0x18, field) */
@@ -244,7 +245,7 @@ std::string BhvCmdNop1(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}", Field);
 }
 
-std::string BhvCmdNop2(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdNop2(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* No operation. Unused.
     #define CMD_NOP_2(field) \
         BC_BB(0x19, field) */
@@ -252,7 +253,7 @@ std::string BhvCmdNop2(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}", Field);
 }
 
-std::string BhvCmdNop3(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdNop3(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* No operation. Unused.
     #define CMD_NOP_3(field) \
         BC_BB(0x1A, field) */
@@ -260,7 +261,7 @@ std::string BhvCmdNop3(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}", Field);
 }
 
-std::string BhvCmdSetModel(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetModel(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the current model ID of the object.
     #define SET_MODEL(modelID) \
         BC_B0H(0x1B, modelID) */
@@ -268,7 +269,7 @@ std::string BhvCmdSetModel(N64Rom &Rom, u32 &Start) {
     return std::format("{}", ModelID);
 }
 
-std::string BhvCmdSpawnChild(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSpawnChild(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Spawns a child object with the specified model and behavior.
     #define SPAWN_CHILD(modelID, behavior) \
         BC_B(0x1C), \
@@ -280,21 +281,21 @@ std::string BhvCmdSpawnChild(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}", ModelID, BehaviorName);
 }
 
-std::string BhvCmdDeactivate(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdDeactivate(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Exits the behavior script and despawns the object.
     #define DEACTIVATE() \
         BC_B(0x1D) */
     return "";
 }
 
-std::string BhvCmdDropToFloor(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdDropToFloor(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Finds the floor triangle directly under the object and moves the object down to it.
     #define DROP_TO_FLOOR() \
         BC_B(0x1E) */
     return "";
 }
 
-std::string BhvCmdSumFloat(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSumFloat(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the destination float field to the sum of the values of the given float fields.
     #define SUM_FLOAT(fieldDst, fieldSrc1, fieldSrc2) \
         BC_BBBB(0x1F, fieldDst, fieldSrc1, fieldSrc2) */
@@ -304,7 +305,7 @@ std::string BhvCmdSumFloat(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {:#x}, {:#x}", FieldDst, FieldSrc1, FieldSrc2);
 }
 
-std::string BhvCmdSumInt(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSumInt(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the destination integer field to the sum of the values of the given integer fields. Unused.
     #define SUM_INT(fieldDst, fieldSrc1, fieldSrc2) \
         BC_BBBB(0x20, fieldDst, fieldSrc1, fieldSrc2) */
@@ -314,21 +315,21 @@ std::string BhvCmdSumInt(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {:#x}, {:#x}", FieldDst, FieldSrc1, FieldSrc2);
 }
 
-std::string BhvCmdBillboard(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdBillboard(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Billboards the current object, making it always face the camera.
     #define BILLBOARD() \
         BC_B(0x21) */
     return "";
 }
 
-std::string BhvCmdHide(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdHide(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Hides the current object.
     #define HIDE() \
         BC_B(0x22) */
     return "";
 }
 
-std::string BhvCmdSetHitbox(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetHitbox(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the size of the object's cylindrical hitbox.
     #define SET_HITBOX(radius, height) \
         BC_B(0x23), \
@@ -338,7 +339,7 @@ std::string BhvCmdSetHitbox(N64Rom &Rom, u32 &Start) {
     return std::format("{}, {}", Radius, Height);
 }
 
-std::string BhvCmdNop4(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdNop4(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* No operation. Unused.
     #define CMD_NOP_4(field, value) \
         BC_BBH(0x24, field, value) */
@@ -347,7 +348,7 @@ std::string BhvCmdNop4(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}", Field, Value);
 }
 
-std::string BhvCmdDelayVar(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdDelayVar(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Delays the behavior script for the number of frames given by the value of the specified field.
     #define DELAY_VAR(field) \
         BC_BB(0x25, field) */
@@ -355,7 +356,7 @@ std::string BhvCmdDelayVar(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}", Field);
 }
 
-std::string BhvCmdBeginRepeatUnused(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdBeginRepeatUnused(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Unused. Marks the start of a loop that will repeat a certain number of times.
     #define BEGIN_REPEAT_UNUSED(count) \
         BC_BB(0x26, count) */
@@ -363,7 +364,7 @@ std::string BhvCmdBeginRepeatUnused(N64Rom &Rom, u32 &Start) {
     return std::format("{}", Count);
 }
 
-std::string BhvCmdLoadAnimations(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdLoadAnimations(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Loads the animations for the object. <field> is always set to oAnimations.
     #define LOAD_ANIMATIONS(field, anims) \
         BC_BB(0x27, field), \
@@ -373,7 +374,7 @@ std::string BhvCmdLoadAnimations(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {:#010x}", Field, Anims);
 }
 
-std::string BhvCmdAnimate(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdAnimate(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Begins animation and sets the object's current animation index to the specified value.
     #define ANIMATE(animIndex) \
         BC_BB(0x28, animIndex) */
@@ -381,7 +382,7 @@ std::string BhvCmdAnimate(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}", AnimIndex);
 }
 
-std::string BhvCmdSpawnChildWithParam(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSpawnChildWithParam(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Spawns a child object with the specified model and behavior, plus a behavior param.
     #define SPAWN_CHILD_WITH_PARAM(bhvParam, modelID, behavior) \
         BC_B0H(0x29, bhvParam), \
@@ -393,16 +394,16 @@ std::string BhvCmdSpawnChildWithParam(N64Rom &Rom, u32 &Start) {
     return std::format("{}, {:#x}, {:#010x}", BhvParam, ModelID, Behavior);
 }
 
-std::string BhvCmdLoadCollisionData(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdLoadCollisionData(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Loads collision data for the object.
     #define LOAD_COLLISION_DATA(collisionData) \
         BC_B(0x2A), \
         BC_PTR(collisionData) */
     u32 CollisionData = Rom.ReadBytes<u32>(Start + 4);
-    return std::format("{:#010x}", CollisionData);
+    return std::format("{}_col_{:#x}", CurrentBhvActor, CollisionData);
 }
 
-std::string BhvCmdSetHitboxWithOffset(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetHitboxWithOffset(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the size of the object's cylindrical hitbox, and applies a downwards offset.
     #define SET_HITBOX_WITH_OFFSET(radius, height, downOffset) \
         BC_B(0x2B), \
@@ -414,7 +415,7 @@ std::string BhvCmdSetHitboxWithOffset(N64Rom &Rom, u32 &Start) {
     return std::format("{}, {}, {}", Radius, Height, DownOffset);
 }
 
-std::string BhvCmdSpawnObj(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSpawnObj(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Spawns a new object with the specified model and behavior.
     #define SPAWN_OBJ(modelID, behavior) \
         BC_B(0x2C), \
@@ -425,14 +426,14 @@ std::string BhvCmdSpawnObj(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {:#010x}", ModelID, Behavior);
 }
 
-std::string BhvCmdSetHome(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetHome(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the home position of the object to its current position.
     #define SET_HOME() \
         BC_B(0x2D) */
     return "";
 }
 
-std::string BhvCmdSetHurtbox(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetHurtbox(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the size of the object's cylindrical hurtbox.
     #define SET_HURTBOX(radius, height) \
         BC_B(0x2E), \
@@ -442,7 +443,7 @@ std::string BhvCmdSetHurtbox(N64Rom &Rom, u32 &Start) {
     return std::format("{}, {}", Radius, Height);
 }
 
-std::string BhvCmdSetInteractType(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetInteractType(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the object's interaction type.
     #define SET_INTERACT_TYPE(type) \
         BC_B(0x2F), \
@@ -451,7 +452,7 @@ std::string BhvCmdSetInteractType(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}", Type);
 }
 
-std::string BhvCmdSetObjPhysics(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetObjPhysics(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets various parameters that the object uses for calculating physics.
     #define SET_OBJ_PHYSICS(wallHitboxRadius, gravity, bounciness, dragStrength, friction, buoyancy, unused1, unused2) \
         BC_B(0x30), \
@@ -471,7 +472,7 @@ std::string BhvCmdSetObjPhysics(N64Rom &Rom, u32 &Start) {
         WallHitboxRadius, Gravity, Bounciness, DragStrength, Friction, Buoyancy, Unused1, Unused2);
 }
 
-std::string BhvCmdSetInteractSubtype(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetInteractSubtype(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the object's interaction subtype. Unused.
     #define SET_INTERACT_SUBTYPE(subtype) \
         BC_B(0x31), \
@@ -480,7 +481,7 @@ std::string BhvCmdSetInteractSubtype(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}", Subtype);
 }
 
-std::string BhvCmdScale(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdScale(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Sets the object's size to the specified percentage.
     #define SCALE(unusedField, percent) \
         BC_BBH(0x32, unusedField, percent) */
@@ -489,7 +490,7 @@ std::string BhvCmdScale(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}", UnusedField, Percent);
 }
 
-std::string BhvCmdParentBitClear(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdParentBitClear(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Performs a bit clear on the object's parent's field with the specified value.
     // Used for clearing active particle flags fron Mario's object.
     #define PARENT_BIT_CLEAR(field, flags) \
@@ -500,7 +501,7 @@ std::string BhvCmdParentBitClear(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {:#x}", Field, Flags);
 }
 
-std::string BhvCmdAnimateTexture(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdAnimateTexture(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Animates an object using texture animation. <field> is always set to oAnimState.
     #define ANIMATE_TEXTURE(field, rate) \
         BC_BBH(0x34, field, rate) */
@@ -509,14 +510,14 @@ std::string BhvCmdAnimateTexture(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}", Field, Rate);
 }
 
-std::string BhvCmdDisableRendering(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdDisableRendering(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Disables rendering for the object.
     #define DISABLE_RENDERING() \
         BC_B(0x35) */
     return "";
 }
 
-std::string BhvCmdSetIntUnused(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSetIntUnused(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Unused. Sets the specified field to an integer. Wastes 4 bytes of space for no reason at all.
     #define SET_INT_UNUSED(field, value) \
         BC_BB(0x36, field), \
@@ -526,7 +527,7 @@ std::string BhvCmdSetIntUnused(N64Rom &Rom, u32 &Start) {
     return std::format("{:#x}, {}", Field, Value);
 }
 
-std::string BhvCmdSpawnWaterDroplet(N64Rom &Rom, u32 &Start) {
+std::string BhvCmdSpawnWaterDroplet(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /* Spawns a water droplet with the given parameters.
     #define SPAWN_WATER_DROPLET(dropletParams) \
         BC_B(0x37), \
@@ -535,7 +536,7 @@ std::string BhvCmdSpawnWaterDroplet(N64Rom &Rom, u32 &Start) {
     return std::format("{:#010x}", DropletParams);
 }
 
-std::string (*BhvCommandsFunctions[])(N64Rom &Rom, u32 &Start) = {
+std::string (*BhvCommandsFunctions[])(N64Rom &Rom, LevelScript &Script, u32 &Start) = {
     BhvCmdBegin,                // 0x00
     BhvCmdDelay,                // 0x01
     BhvCmdCall,                 // 0x02
@@ -612,7 +613,7 @@ u8 GetBehaviorScriptCmdSize(N64Rom &Rom, u32 Entry) {
     }
 }
 
-static void WriteBehaviorScriptRecursive(FILE *BhvDump, N64Rom &Rom, u32 Entry, u32 SegAddr) {
+static void WriteBehaviorScriptRecursive(FILE *BhvDump, N64Rom &Rom, u32 Entry, u32 SegAddr, LevelScript &Script, std::string ActorFolder) {
     if (!SegAddr || ProcessedBhvs[SegAddr]) return;
     ProcessedBhvs[SegAddr] = true;
     u32 ScanEntry = Entry;
@@ -629,7 +630,17 @@ static void WriteBehaviorScriptRecursive(FILE *BhvDump, N64Rom &Rom, u32 Entry, 
         if (Cmd == 0x02 || Cmd == 0x04) {
             u32 NewSegAddr = Rom.ReadBytes<u32>(ScanEntry + 4);
             if (ValidateMemAddr(NewSegAddr)) {
-                WriteBehaviorScriptRecursive(BhvDump, Rom, NewSegAddr, NewSegAddr);
+                WriteBehaviorScriptRecursive(BhvDump, Rom, NewSegAddr, NewSegAddr, Script, ActorFolder);
+            }
+        }
+
+        if (Cmd == 0x2A) {
+            u32 CollisionSegAddr = Rom.ReadBytes<u32>(ScanEntry + 4);
+            if (ValidateMemAddr(CollisionSegAddr) && ActorFolder != "") {
+                std::string ColFilePath = "output/actors/" + ActorFolder;
+                fs::create_directories(ColFilePath);
+                ColFilePath += "/collision.inc.c";
+                ExportCollision(Rom, 0, ActorFolder, CollisionSegAddr, Script, ColFilePath.c_str(), true);
             }
         }
 
@@ -654,7 +665,7 @@ static void WriteBehaviorScriptRecursive(FILE *BhvDump, N64Rom &Rom, u32 Entry, 
 
         if (BhvCommandsFunctions[Cmd]) {
             std::string CmdName = BhvCommandsName[Cmd];
-            std::string Args = BhvCommandsFunctions[Cmd](Rom, Entry);
+            std::string Args = BhvCommandsFunctions[Cmd](Rom, Script, Entry);
             fprintf(BhvDump, "    %s(%s),\n", CmdName.c_str(), Args.c_str());
 
             if (Cmd == 0x09 || Cmd == 0x0A || Cmd == 0x1D || Cmd == 0x04) break;
@@ -679,10 +690,11 @@ void ExportBehaviorScripts(N64Rom &Rom, LevelScript &Script) {
     std::string BhvPath = DataPath + "behaviors.c";
     FILE *BhvDump = fopen(BhvPath.c_str(), "a");
 
-    for (auto &Bhv : Script.Behaviors) {
+    for (auto &[Bhv, ModelName] : Script.Objects) {
         if (ProcessedBhvs[Bhv]) continue;
-        printf("Exporting behavior 0x%x\n", Bhv);
-        WriteBehaviorScriptRecursive(BhvDump, Rom, Bhv, Bhv);
+        CurrentBhvActor = ModelName;
+        printf("Exporting behavior %s %s\n", GetLabelFromMap(Bhv).c_str(), (ModelName == "" ? "" : "with model " + ModelName).c_str());
+        WriteBehaviorScriptRecursive(BhvDump, Rom, Bhv, Bhv, Script, ModelName);
     }
 
     fclose(BhvDump);

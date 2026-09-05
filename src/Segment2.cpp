@@ -94,21 +94,21 @@ void FindAndLoadSegment2(N64Rom &Rom) {
     std::vector<Segment2Match> CodeMatches;
     std::unordered_map<u32, u32> CompMap;
 
-    for (u32 i = 0; i < Rom.Size - 16; i += 4) {
-        u32 Magic = Rom.ReadBytesPhysical<u32>(i);
+    for (u32 I = 0; I < Rom.Size - 16; I += 4) {
+        u32 Magic = Rom.ReadBytesPhysical<u32>(I);
         if (Magic == 0x4D494F30 || Magic == 0x59617930 || Magic == 0x524E4301 || Magic == 0x524E4302) {
             u32 UncompSize = 0;
             if (Magic == 0x524E4301 || Magic == 0x524E4302) {
-                for (int j = 0; j < 4; j++) {
-                    UncompSize = (UncompSize << 8) | Rom.ReadBytesPhysical<u8>(i + 4 + j);
+                for (int J = 0; J < 4; J++) {
+                    UncompSize = (UncompSize << 8) | Rom.ReadBytesPhysical<u8>(I + 4 + J);
                 }
             } else {
-                UncompSize = Rom.ReadBytesPhysical<u32>(i + 4);
+                UncompSize = Rom.ReadBytesPhysical<u32>(I + 4);
             }
 
             if (UncompSize >= 32768 && UncompSize <= 131072) {
-                Matches.push_back({i, UncompSize});
-                CompMap[i] = UncompSize;
+                Matches.push_back({I, UncompSize});
+                CompMap[I] = UncompSize;
             }
         }
     }

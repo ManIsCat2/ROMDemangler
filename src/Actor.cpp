@@ -22,9 +22,9 @@ void ExportActors(N64Rom &Rom, LevelScript &Script) {
 
         Script.CurrentActor = &Act;
 
+        printf("Exporting actor %s\n", Act.Name.c_str());
         if (!Act.IsDL) {
             std::string GeoDumpPath = ActorFolder + "/geo.inc.c";
-            printf("Exporting actor %s\n", Act.Name.c_str());
             ExportGeolayout(Rom, 0, Act.Name, Act.Addr, Act.Addr, Script, GeoDumpPath.c_str());
         } else {
             Act.DisplayLists.push_back(Act.Addr);

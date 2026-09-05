@@ -464,6 +464,40 @@ std::string LvlCommandsName[] = {
     "GET_OR_SET",
 };
 
+std::string GetGeoNameForLoad(LevelScript &Script, u32 Geo, std::string Base) {
+    u8 GeoBank = Geo >> 24;
+    std::string FinalName = Base;
+
+    if ((!Base.starts_with("Custom_") || GeoBank != 0x19) && (GameType.IsBinary())) {
+        if (GeoBank == 0x0D || GeoBank == 0x0C) {
+            std::string Group = ActorGroup::FindNearestGroup(SegmentOffsets[GeoBank][0]);
+            const std::string BuiltinName = ActorGroup::GetGeoNameWithGroup(Group, Geo);
+            if (BuiltinName != "") {
+                FinalName = BuiltinName;
+            }
+        } else if (GeoBank == 0x0E || GeoBank == 0x12) {
+            std::string GeoName0x12 = GetLabelFromMap(0x12000000 | (Geo & 0x00FFFFFF));
+            std::string GeoName0x0E = GetLabelFromMap(0x0E000000 | (Geo & 0x00FFFFFF));
+            std::string SelectedName = GeoName0x12;
+            if (!GeoName0x0E.starts_with("Custom_")) {
+                SelectedName = GeoName0x0E;
+            }
+            if (!SelectedName.starts_with("Custom_")) {
+                FinalName = LevelSpecGeoNameStart[Script.LevelID] + std::format("_{:06X}", (Script.LevelID == 5 ? (Geo - 0x10) : Geo) & 0x00FFFFFF);
+            }
+        } else if (GeoBank != 0x0F && GeoBank != 0x00 && GeoBank != 0x03) {
+            const std::string BuiltinName = ActorGroup::GetGeoName(Geo);
+            if (BuiltinName != "") {
+                FinalName = BuiltinName;
+            }
+        }
+    }
+    if (FinalName.starts_with("Custom_")) {
+        FinalName = std::format("{}_actor_geo_{:#x}", Script.Name, Geo);
+    }
+    return FinalName;
+}
+
 std::string LvlCmdExec(N64Rom &Rom, LevelScript &Script, u32 &Start) {
     /*
     #define EXECUTE(seg, script, scriptEnd, entry) \
@@ -833,7 +867,7 @@ std::string LvlCmdLoadModelFromDL(N64Rom &Rom, LevelScript &Script, u32 &Start) 
     if (DisplayList) {
         Actor NewActor;
         NewActor.IsDL = true;
-        DisplayListName = NewActor.Name = std::format("{}_actor_dl_{:x}", Script.Name, DisplayList);
+        DisplayListName = NewActor.Name = std::format("{}_actor_dl_{:#x}", Script.Name, DisplayList);
         NewActor.Addr = DisplayList;
         Script.Actors.push_back(NewActor);
     }
@@ -856,41 +890,16 @@ std::string LvlCmdLoadModelFromGeo(N64Rom &Rom, LevelScript &Script, u32 &Start)
     s16 ModelID = Rom.ReadBytes<s16>(Start + 2, false);
     u32 Geo = Rom.ReadBytes<u32>(Start + 4, false);
 
-    u8 GeoBank = Geo >> 24;
     std::string GeoName = GetLabelFromMap(Geo);
-
-    if ((!GeoName.starts_with("Custom_") || GeoBank != 0x19) && (GameType.IsBinary())) {
-        if (GeoBank == 0x0D || GeoBank == 0x0C) {
-            std::string Group = ActorGroup::FindNearestGroup(SegmentOffsets[GeoBank][0]);
-            const std::string BuiltinName = ActorGroup::GetGeoNameWithGroup(Group, Geo);
-            if (BuiltinName != "") {
-                GeoName = BuiltinName;
-            }
-        } else if (GeoBank == 0x0E || GeoBank == 0x12) {
-            std::string GeoName0x12 = GetLabelFromMap(0x12000000 | (Geo & 0x00FFFFFF));
-            std::string GeoName0x0E = GetLabelFromMap(0x0E000000 | (Geo & 0x00FFFFFF));
-            std::string SelectedName = GeoName0x12;
-            if (!GeoName0x0E.starts_with("Custom_")) {
-                SelectedName = GeoName0x0E;
-            }
-            if (!SelectedName.starts_with("Custom_")) {
-                GeoName = LevelSpecGeoNameStart[Script.LevelID] + std::format("_{:06X}", (Script.LevelID == 5 ? (Geo - 0x10) : Geo) & 0x00FFFFFF);
-            }
-        } else if (GeoBank != 0x0F && GeoBank != 0x00 && GeoBank != 0x03) {
-            const std::string BuiltinName = ActorGroup::GetGeoName(Geo);
-            if (BuiltinName != "") {
-                GeoName = BuiltinName;
-            }
-        }
-    }
+    GeoName = GetGeoNameForLoad(Script, Geo, GeoName);
+    Script.ModelIds[ModelID] = GeoName;
 
     if (Geo) {
         Actor NewActor;
         NewActor.IsDL = false;
         bool AddActor = true;
         
-        if (GeoName.starts_with("Custom_")) {
-            GeoName = std::format("{}_actor_geo_{:x}", Script.Name, Geo);
+        if (GeoName.contains("_actor_geo_")) {
             if (ActorsExport == "vanilla") {
                 AddActor = false;
             }
@@ -955,8 +964,14 @@ std::string LvlCmdPlaceObject(N64Rom &Rom, LevelScript &Script, u32 &Start) {
             return OutArgs;
         }
     }
-
-    Script.Behaviors.push_back(Bhv);
+    
+    std::string ModelName = "";
+    if (Script.ModelIds.contains(ModelID)) {
+        ModelName = Script.ModelIds[ModelID];
+    }
+    if (Script.FoundLevel) {
+        Script.Objects.push_back({Bhv, ModelName});
+    }
 
     std::string OutArgs = std::format(
         "/* Model */ {:#x}, /* Pos */ {}, {}, {}, /* Angle */ {}, {}, {}, /* Param */ {:#x}, /* Behavior */ {}, /* Act */ {}",
