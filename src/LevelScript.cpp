@@ -1340,8 +1340,6 @@ void ExportLevel(N64Rom &Rom, u8 LvlID) {
             Entry = (u32)(Found - Start);
             if (!FoundScriptEntry) printf("Script Entry found at address: 0x%x\n", Entry);
             FoundScriptEntry = Entry;
-
-            FindAndLoadSegment2(Rom);
         } else {
             printf("No Script Entries could be found.\n");
             exit(1);

@@ -192,13 +192,16 @@ int main(int argc, char** argv) {
         CustomSymbolsPath = Result["custom-symbols"].as<std::string>();
     }
 
-    if (Result.count("help") || !Result.count("rom") || !Result.count("levels")) {
+    if (Result.count("help") || !Result.count("rom")) {
         std::cout << Options.help() << std::endl;
         return 0;
     }
 
     std::string RomPath = Result["rom"].as<std::string>();
-    std::vector<int> LvlIDs = Result["levels"].as<std::vector<int>>();
+    std::vector<int> LvlIDs;
+    if (Result.count("levels")) {
+        LvlIDs = Result["levels"].as<std::vector<int>>();
+    }
 
     N64Rom Rom;
     Rom.OpenFile(RomPath.c_str(), ExportSegment0 ? RAMPath.c_str() : nullptr);
@@ -295,6 +298,8 @@ int main(int argc, char** argv) {
     std::error_code ErrCode;
     if (fs::exists("output")) fs::remove_all("output", ErrCode);
     fs::create_directories("output");
+
+    FindAndLoadSegment2(Rom);
 
     if (std::find(LvlIDs.begin(), LvlIDs.end(), 99) != LvlIDs.end()) {
         for (const auto &[LvlID, Name] : LevelNames) {
