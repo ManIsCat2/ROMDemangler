@@ -405,6 +405,28 @@ std::string ConvertGeoMode(N64Rom &Rom, u32 Flags) {
     return Result;
 }
 
+const std::vector<std::pair<u32, std::string>> OtherModeMacrosF3D = {
+    {(u8)G_SETOTHERMODE_L, "G_SETOTHERMODE_L"}, {(u8)G_SETOTHERMODE_H, "G_SETOTHERMODE_H"},
+};
+
+const std::vector<std::pair<u32, std::string>> OtherModeMacrosF3DEX2 = {
+    {G_SETOTHERMODE_L_F3DEX2, "G_SETOTHERMODE_L"}, {G_SETOTHERMODE_H_F3DEX2, "G_SETOTHERMODE_H"},
+};
+
+std::string ConvertOtherMode(N64Rom &Rom, u8 Val) {
+    std::string Result = "";
+    const auto &Macros = (Rom.Microcode == UCODE_F3DEX2) ? OtherModeMacrosF3DEX2 : OtherModeMacrosF3D;
+
+    for (const auto &Macro : Macros) {
+        if (Val == Macro.first) {
+            Result = Macro.second;
+            break;
+        }
+    }
+    
+    return Result;
+}
+
 void ExportModels(N64Rom &Rom, LevelScript &Script, const std::string &LvlName, u8 Area, const char *FilePath, bool IsActor, Actor *Act) {
     FILE *ModelDump = fopen(FilePath, "w");
 
@@ -579,7 +601,7 @@ void ExportModels(N64Rom &Rom, LevelScript &Script, const std::string &LvlName, 
                         break;
                     case (u8)G_SETOTHERMODE_L:
                     case (u8)G_SETOTHERMODE_H:
-                        fprintf(ModelDump,"    gsSPSetOtherMode(%u, %u, %u, %u),\n", Cmd, C0(8, 8), C0(0, 8), W1);
+                        fprintf(ModelDump,"    gsSPSetOtherMode(%s, %u, %u, %u),\n", ConvertOtherMode(Rom, Cmd).c_str(), C0(8, 8), C0(0, 8), W1);
                         break;
                 }
             } else if (Rom.Microcode == UCODE_F3DEX2) {
@@ -617,7 +639,7 @@ void ExportModels(N64Rom &Rom, LevelScript &Script, const std::string &LvlName, 
                         break;
                     case (u8)G_SETOTHERMODE_L_F3DEX2:
                     case (u8)G_SETOTHERMODE_H_F3DEX2:
-                        fprintf(ModelDump,"    gsSPSetOtherMode(%u, %u, %u, %u),\n", Cmd, 31 - C0(8, 8) - C0(0, 8), C0(0, 8) + 1, W1);
+                        fprintf(ModelDump,"    gsSPSetOtherMode(%s, %u, %u, %u),\n", ConvertOtherMode(Rom, Cmd).c_str(), 31 - C0(8, 8) - C0(0, 8), C0(0, 8) + 1, W1);
                         break;
                 }
             } else if (Rom.Microcode == UCODE_F3DEX) {
@@ -658,7 +680,7 @@ void ExportModels(N64Rom &Rom, LevelScript &Script, const std::string &LvlName, 
                         break;
                     case (u8)G_SETOTHERMODE_L:
                     case (u8)G_SETOTHERMODE_H:
-                        fprintf(ModelDump,"    gsSPSetOtherMode(%u, %u, %u, %u),\n", Cmd, C0(8, 8), C0(0, 8), W1);
+                        fprintf(ModelDump,"    gsSPSetOtherMode(%s, %u, %u, %u),\n", ConvertOtherMode(Rom, Cmd).c_str(), C0(8, 8), C0(0, 8), W1);
                         break;
                 }
             }
