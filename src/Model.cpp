@@ -266,6 +266,18 @@ void ParseRDPCommands(std::vector<F3DTexture> &Textures, u32 W0, u32 W1, u8 Cmd,
                 F3D_CC(CC_PART_A, C0(5, 4)),  F3D_CC(CC_PART_B, C1(21, 4)), F3D_CC(CC_PART_C, C0(0, 5)),  F3D_CC(CC_PART_D, C1(6, 3)), 
                 F3D_AC(CC_PART_A, C1(21, 3)), F3D_AC(CC_PART_B, C1(3, 3)),  F3D_AC(CC_PART_C, C1(18, 3)), F3D_AC(CC_PART_D, C1(0, 3)));
             break;
+        case G_RDPFULLSYNC:
+            fprintf(ModelDump, "    gsDPFullSync(),\n");
+            break;
+        case G_RDPTILESYNC: 
+            fprintf(ModelDump, "    gsDPTileSync(),\n");
+            break;
+        case G_RDPPIPESYNC:
+            fprintf(ModelDump, "    gsDPPipeSync(),\n");
+            break;
+        case G_RDPLOADSYNC:
+            fprintf(ModelDump, "    gsDPLoadSync(),\n");
+            break;
         }
     }
 }
