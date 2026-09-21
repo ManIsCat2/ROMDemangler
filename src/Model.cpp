@@ -603,6 +603,18 @@ void ExportModels(N64Rom &Rom, LevelScript &Script, const std::string &LvlName, 
                     case (u8)G_SETOTHERMODE_H:
                         fprintf(ModelDump,"    gsSPSetOtherMode(%s, %u, %u, %u),\n", ConvertOtherMode(Rom, Cmd).c_str(), C0(8, 8), C0(0, 8), W1);
                         break;
+                    case G_RDPFULLSYNC:
+                        fprintf(ModelDump, "    gsDPFullSync(),\n");
+                        break;
+                    case G_RDPTILESYNC:
+                        fprintf(ModelDump, "    gsDPTileSync(),\n");
+                        break;
+                    case G_RDPPIPESYNC:
+                        fprintf(ModelDump, "    gsDPPipeSync(),\n");
+                        break;
+                    case G_RDPLOADSYNC:
+                        fprintf(ModelDump, "    gsDPLoadSync(),\n");
+                        break;
                 }
             } else if (Rom.Microcode == UCODE_F3DEX2) {
                 if (Cmd == G_ENDDL_F3DEX2) { fprintf(ModelDump, "    gsSPEndDisplayList(),\n};\n\n"); break; }
@@ -640,6 +652,18 @@ void ExportModels(N64Rom &Rom, LevelScript &Script, const std::string &LvlName, 
                     case (u8)G_SETOTHERMODE_L_F3DEX2:
                     case (u8)G_SETOTHERMODE_H_F3DEX2:
                         fprintf(ModelDump,"    gsSPSetOtherMode(%s, %u, %u, %u),\n", ConvertOtherMode(Rom, Cmd).c_str(), 31 - C0(8, 8) - C0(0, 8), C0(0, 8) + 1, W1);
+                        break;
+                    case G_RDPFULLSYNC:
+                        fprintf(ModelDump, "    gsDPFullSync(),\n");
+                        break;
+                    case G_RDPTILESYNC:
+                        fprintf(ModelDump, "    gsDPTileSync(),\n");
+                        break;
+                    case G_RDPPIPESYNC:
+                        fprintf(ModelDump, "    gsDPPipeSync(),\n");
+                        break;
+                    case G_RDPLOADSYNC:
+                        fprintf(ModelDump, "    gsDPLoadSync(),\n");
                         break;
                 }
             } else if (Rom.Microcode == UCODE_F3DEX) {
@@ -681,6 +705,18 @@ void ExportModels(N64Rom &Rom, LevelScript &Script, const std::string &LvlName, 
                     case (u8)G_SETOTHERMODE_L:
                     case (u8)G_SETOTHERMODE_H:
                         fprintf(ModelDump,"    gsSPSetOtherMode(%s, %u, %u, %u),\n", ConvertOtherMode(Rom, Cmd).c_str(), C0(8, 8), C0(0, 8), W1);
+                        break;
+                    case G_RDPFULLSYNC:
+                        fprintf(ModelDump, "    gsDPFullSync(),\n");
+                        break;
+                    case G_RDPTILESYNC:
+                        fprintf(ModelDump, "    gsDPTileSync(),\n");
+                        break;
+                    case G_RDPPIPESYNC:
+                        fprintf(ModelDump, "    gsDPPipeSync(),\n");
+                        break;
+                    case G_RDPLOADSYNC:
+                        fprintf(ModelDump, "    gsDPLoadSync(),\n");
                         break;
                 }
             }
