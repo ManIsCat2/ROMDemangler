@@ -1,5 +1,6 @@
 #include "MovingTexture.h"
 #include "LevelScript.h"
+#include "N64Rom.h"
 
 std::vector<MovingTextureQC> MovingTextures = {};
 
@@ -17,7 +18,7 @@ void ExportMovTex(N64Rom &Rom, u8 Area, const std::string &LvlName, LevelScript 
         std::vector<u32> MovTexPtrs = {};
         std::vector<std::string> MovTexQCStrings = {};
 
-        if (GameType.GetID() == GT_EDITOR) {
+        if (GameType.GetID() == GT_EDITOR || GameType.GetID() == GT_LEVEL_IMPORTER) {
             WaterBox = (0x19001800+0x50*WaterType);
         } else {
             WaterBox = (0x19006000+0x280*WaterType+0x50*Area);
