@@ -1,6 +1,5 @@
 #include "MovingTexture.h"
 #include "LevelScript.h"
-#include "N64Rom.h"
 
 std::vector<MovingTextureQC> MovingTextures = {};
 
